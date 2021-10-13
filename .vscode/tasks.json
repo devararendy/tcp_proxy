@@ -10,7 +10,10 @@
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-I",
-                "${workspaceFolder}/sdk/asio-1.18.1/include**"
+                "${workspaceFolder}/sdk/boost_1_77_0",
+                "-L",
+                "/usr/lib/",
+                "-lpthread"
             ],
             "options": {
                 "cwd": "${fileDirname}"

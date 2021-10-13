@@ -4,7 +4,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/sdk/asio-1.18.1/include**"
+                "${workspaceFolder}/sdk/boost_1_77_0"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
