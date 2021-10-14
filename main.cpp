@@ -61,10 +61,86 @@
 #include <thread>
 #include <chrono>
 
+#define DEBUG
+
+#define OUTGOING_FNAME  "outgoing.csv"
+#define INCOMING_FNAME  "incoming.csv"
+
 enum { max_data_length = 8192 }; //8KB
-char newIncoming=-1;
-char newOutgoing=-1;
-std::string incomingBfr, outgoingBfr;
+
+class DataLogger{
+   public:
+      DataLogger()
+      {
+         initDataLogger();
+      }
+      ~DataLogger()
+      {
+         #ifdef DEBUG
+            std::cout << "Saving & Clossing log ..." << std::endl;
+         #endif
+         ofl.flush();
+         ifl.flush();
+         ofl.close();
+         ifl.close();
+      }
+      
+      void writeIncomingLog(std::string data, std::string ip, uint16_t port)
+      {
+         #ifdef DEBUG
+            std::cout << "Saving Incoming Data From : "<< ip << ":" << port << ", data : " << data << std::endl;
+         #endif
+         ifl << ip << ":" << port << ";" << data.length() << ";\"" << data << "\"";
+      }
+      void writeOutgoingLog(std::string data, std::string ip, uint16_t port)
+      {
+         #ifdef DEBUG
+            std::cout << "Saving Outgoing From : "<< ip << ":" << port << ", data : " << data << std::endl;
+         #endif
+         ofl << ip << ":" << port << ";" << data.length() << ";\"" << data << "\"";
+      }
+      void thdAutoSave(void)
+      {
+         #ifdef DEBUG
+            std::cout << "Running thread for saving data..." << std::endl;
+         #endif
+         while (1)
+         {
+            ofl.flush();
+            ifl.flush();
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+         }
+      }
+      void initDataLogger(void)
+      {
+         #ifdef DEBUG
+            std::cout << "Opening file for data logger ..." << std::endl;
+         #endif
+
+         ofl.open(OUTGOING_FNAME);
+         ifl.open(INCOMING_FNAME);
+
+         ThdAutoSave = std::thread(&DataLogger::thdAutoSave, this);                               // start thread for saving incoming & outgoing data
+
+      }
+      void addOutgoingLog(std::string data, std::string ip, uint16_t port)
+      {
+         // delete logOutgoing;
+         logOutgoing = new std::thread(&DataLogger::writeOutgoingLog, this, data, ip, port);
+         logOutgoing->join();
+      }
+      void addIncomingLog(std::string data, std::string ip, uint16_t port)
+      {
+         // delete logIncoming;
+         logIncoming = new std::thread(&DataLogger::writeIncomingLog, this, data, ip, port);
+         logIncoming->join();
+      }
+   private:
+      std::ofstream ofl, ifl;
+      std::thread ThdAutoSave;
+      std::thread *logOutgoing, *logIncoming;
+};
+
 
 namespace tcp_proxy
 {
@@ -73,7 +149,7 @@ namespace tcp_proxy
    class bridge : public boost::enable_shared_from_this<bridge>
    {
    public:
-
+      DataLogger dLogger;
       typedef ip::tcp::socket socket_type;
       typedef boost::shared_ptr<bridge> ptr_type;
 
@@ -145,6 +221,8 @@ namespace tcp_proxy
          {
             std::cout << "Data to write to client :" << upstream_data_ << ", len : " << bytes_transferred << std::endl;
             std::cout << "downstream socket : " << downstream_socket_.remote_endpoint().address() << ", port : " << downstream_socket_.remote_endpoint().port() << std::endl;
+            std::string outgoing = std::string((char*)upstream_data_, bytes_transferred);
+            dLogger.addOutgoingLog(outgoing, downstream_socket_.remote_endpoint().address().to_string(), downstream_socket_.remote_endpoint().port());
             async_write(downstream_socket_,
                  boost::asio::buffer(upstream_data_,bytes_transferred),
                  boost::bind(&bridge::handle_downstream_write,
@@ -186,12 +264,8 @@ namespace tcp_proxy
          {
             std::cout << "Data to write to server :" << downstream_data_ << ", len : " << bytes_transferred << std::endl;
             std::cout << "upstream socket : " << upstream_socket_.remote_endpoint().address() << ", port : " << upstream_socket_.remote_endpoint().port() << std::endl;
-            while (newIncoming!=0)
-            {
-               std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            }
-            incomingBfr += std::string((char*)downstream_data_, bytes_transferred);
-            newIncoming=1;
+            std::string incoming = std::string((char*)downstream_data_, bytes_transferred);
+            dLogger.addIncomingLog(incoming, upstream_socket_.remote_endpoint().address().to_string(), upstream_socket_.remote_endpoint().port());
             async_write(upstream_socket_,
                   boost::asio::buffer(downstream_data_,bytes_transferred),
                   boost::bind(&bridge::handle_upstream_write,
@@ -310,27 +384,6 @@ namespace tcp_proxy
 }
 
 
-
-void thdDataLogger(void)
-{
-   std::ofstream fl;
-   fl.open("bismillah.log");
-
-   while (1)
-   {
-      if (newIncoming>0)
-      {
-         printf("writing buffer to file...\n");
-         newIncoming=0;             //buffer in use
-         fl << incomingBfr;
-         incomingBfr="";
-         newIncoming=-1;
-      }
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-   }
-   
-}
-
 int main(int argc, char* argv[])
 {
    if (argc != 5)
@@ -353,9 +406,6 @@ int main(int argc, char* argv[])
                                            forward_host, forward_port);
 
       acceptor.accept_connections();
-
-      std::thread ThdDataLogger(thdDataLogger);                               // start thread for saving incoming & outgoing data
-
       ios.run();
    }
    catch(std::exception& e)
