@@ -57,6 +57,14 @@
 #include <boost/asio.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include <fstream>
+#include <thread>
+#include <chrono>
+
+enum { max_data_length = 8192 }; //8KB
+char newIncoming=-1;
+char newOutgoing=-1;
+std::string incomingBfr, outgoingBfr;
 
 namespace tcp_proxy
 {
@@ -135,6 +143,8 @@ namespace tcp_proxy
       {
          if (!error)
          {
+            std::cout << "Data to write to client :" << upstream_data_ << ", len : " << bytes_transferred << std::endl;
+            std::cout << "downstream socket : " << downstream_socket_.remote_endpoint().address() << ", port : " << downstream_socket_.remote_endpoint().port() << std::endl;
             async_write(downstream_socket_,
                  boost::asio::buffer(upstream_data_,bytes_transferred),
                  boost::bind(&bridge::handle_downstream_write,
@@ -174,6 +184,14 @@ namespace tcp_proxy
       {
          if (!error)
          {
+            std::cout << "Data to write to server :" << downstream_data_ << ", len : " << bytes_transferred << std::endl;
+            std::cout << "upstream socket : " << upstream_socket_.remote_endpoint().address() << ", port : " << upstream_socket_.remote_endpoint().port() << std::endl;
+            while (newIncoming!=0)
+            {
+               std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+            incomingBfr += std::string((char*)downstream_data_, bytes_transferred);
+            newIncoming=1;
             async_write(upstream_socket_,
                   boost::asio::buffer(downstream_data_,bytes_transferred),
                   boost::bind(&bridge::handle_upstream_write,
@@ -219,7 +237,6 @@ namespace tcp_proxy
       socket_type downstream_socket_;
       socket_type upstream_socket_;
 
-      enum { max_data_length = 8192 }; //8KB
       unsigned char downstream_data_[max_data_length];
       unsigned char upstream_data_  [max_data_length];
 
@@ -267,6 +284,7 @@ namespace tcp_proxy
          {
             if (!error)
             {
+               // std::cout << "Host : " << upstream_host_ << ", Port : " << upstream_port_ << std::endl;
                session_->start(upstream_host_,upstream_port_);
 
                if (!accept_connections())
@@ -291,11 +309,33 @@ namespace tcp_proxy
    };
 }
 
+
+
+void thdDataLogger(void)
+{
+   std::ofstream fl;
+   fl.open("bismillah.log");
+
+   while (1)
+   {
+      if (newIncoming>0)
+      {
+         printf("writing buffer to file...\n");
+         newIncoming=0;             //buffer in use
+         fl << incomingBfr;
+         incomingBfr="";
+         newIncoming=-1;
+      }
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+   }
+   
+}
+
 int main(int argc, char* argv[])
 {
    if (argc != 5)
    {
-      std::cerr << "usage: tcpproxy_server <local host ip> <local port> <forward host ip> <forward port>" << std::endl;
+      std::cerr << "usage: " << argv[0] << " <local host ip> <local port> <forward host ip> <forward port>" << std::endl;
       return 1;
    }
 
@@ -313,6 +353,8 @@ int main(int argc, char* argv[])
                                            forward_host, forward_port);
 
       acceptor.accept_connections();
+
+      std::thread ThdDataLogger(thdDataLogger);                               // start thread for saving incoming & outgoing data
 
       ios.run();
    }
