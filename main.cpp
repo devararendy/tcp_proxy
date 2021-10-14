@@ -60,6 +60,7 @@
 #include <fstream>
 #include <thread>
 #include <chrono>
+#include <time.h>
 
 #define DEBUG
 
@@ -84,20 +85,31 @@ class DataLogger{
          ofl.close();
          ifl.close();
       }
-      
+      std::string getCurrentTime()
+      {
+         time_t rawtime;
+         struct tm * timeinfo;
+         char buffer [80];
+
+         time (&rawtime);
+         timeinfo = localtime (&rawtime);
+         strftime(buffer, 80, "%x %X", timeinfo);
+
+         return std::string(buffer);
+      }
       void writeIncomingLog(std::string data, std::string ip, uint16_t port)
       {
          #ifdef DEBUG
             std::cout << "Saving Incoming Data From : "<< ip << ":" << port << ", data : " << data << std::endl;
          #endif
-         ifl << ip << ":" << port << ";" << data.length() << ";\"" << data << "\"" << std::endl;
+         ifl << getCurrentTime() << ";" << ip << ":" << port << ";" << data.length() << ";\"" << data << "\"" << std::endl;
       }
       void writeOutgoingLog(std::string data, std::string ip, uint16_t port)
       {
          #ifdef DEBUG
             std::cout << "Saving Outgoing From : "<< ip << ":" << port << ", data : " << data << std::endl;
          #endif
-         ofl << ip << ":" << port << ";" << data.length() << ";\"" << data << "\"" << std::endl;
+         ofl << getCurrentTime() << ";" << ip << ":" << port << ";" << data.length() << ";\"" << data << "\"" << std::endl;
       }
       void thdAutoSave(void)
       {
@@ -139,6 +151,7 @@ class DataLogger{
       std::ofstream ofl, ifl;
       std::thread ThdAutoSave;
       std::thread *logOutgoing, *logIncoming;
+
 };
 
 
@@ -149,7 +162,6 @@ namespace tcp_proxy
    class bridge : public boost::enable_shared_from_this<bridge>
    {
    public:
-      DataLogger dLogger;
       typedef ip::tcp::socket socket_type;
       typedef boost::shared_ptr<bridge> ptr_type;
 
@@ -310,6 +322,7 @@ namespace tcp_proxy
 
       socket_type downstream_socket_;
       socket_type upstream_socket_;
+      DataLogger dLogger;
 
       unsigned char downstream_data_[max_data_length];
       unsigned char upstream_data_  [max_data_length];
