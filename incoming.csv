@@ -1,102 +1,23 @@
-127.0.0.1:4444;1;
-127.0.0.1:4444;6;fdsaf
-127.0.0.1:4444;9;asdfasdf
-127.0.0.1:4444;9;sadfasdf
-127.0.0.1:4444;5;sdaf
-127.0.0.1:4444;7;fdsafa
-127.0.0.1:4444;6;fasdf
-127.0.0.1:4444;5;asdf
-127.0.0.1:4444;5;asdf
-127.0.0.1:4444;6;fasdf
-127.0.0.1:4444;11;agdsfgsdfg
-127.0.0.1:4444;6;gsdfg
-127.0.0.1:4444;6;asdfa
-127.0.0.1:4444;200;Since C++11 you could use std::put_time from iomanip header:
+127.0.0.1:4444;10;"asdfasdfa
+"
+127.0.0.1:4444;14;"asdfasdfasdfa
+"
+127.0.0.1:4444;104;"To quote Wikipedia:
 
-#include <iostream>
-#include <iomanip>
-#include <ctime>
+Fields with embedded line breaks must be enclosed within double-quote characters.
 
-int main()
-{
-    auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
-127.0.0.1:4444;515;    std::cout << std::put_time(&tm, "%d-%m-%Y %H-%M-%S") << std::endl;
-}
-std::put_time is a stream manipulator, therefore it could be used together with std::ostringstream in order to convert the date to a string:
+"
+127.0.0.1:4444;212;"Like e.g.:
 
-#include <iostream>
-#include <iomanip>
-#include <ctime>
-#include <sstream>
+1997,Ford,E350,"Go get one now
+they are going fast"
+Share
+Improve this answer
+Follow
+answered Jun 29 '11 at 5:47
 
-int main()
-{
-    auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
+Uwe Keim
+37.3k5454 gold badges165165 silver badges273273 bronze badges
+Add a comment
 
-    std::ostringstream oss;
-    oss << std::put_time(&tm, "%d-%m-%Y %H-%M-%S");
-    auto str = oss.str();
-
-    std::cout << str << std::endl;
-127.0.0.1:4444;2;}
-127.0.0.1:4444;680;Since C++11 you could use std::put_time from iomanip header:
-
-#include <iostream>
-#include <iomanip>
-#include <ctime>
-
-int main()
-{
-    auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
-    std::cout << std::put_time(&tm, "%d-%m-%Y %H-%M-%S") << std::endl;
-}
-std::put_time is a stream manipulator, therefore it could be used together with std::ostringstream in order to convert the date to a string:
-
-#include <iostream>
-#include <iomanip>
-#include <ctime>
-#include <sstream>
-
-int main()
-{
-    auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
-
-    std::ostringstream oss;
-    oss << std::put_time(&tm, "%d-%m-%Y %H-%M-%S");
-    auto str = oss.str();
-
-127.0.0.1:4444;35;    std::cout << str << std::endl;
-127.0.0.1:4444;102;}Since C++11 you could use std::put_time from iomanip header:
-
-#include <iostream>
-#include <iomanip>
-127.0.0.1:4444;614;#include <ctime>
-
-int main()
-{
-    auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
-    std::cout << std::put_time(&tm, "%d-%m-%Y %H-%M-%S") << std::endl;
-}
-std::put_time is a stream manipulator, therefore it could be used together with std::ostringstream in order to convert the date to a string:
-
-#include <iostream>
-#include <iomanip>
-#include <ctime>
-#include <sstream>
-
-int main()
-{
-    auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
-
-    std::ostringstream oss;
-    oss << std::put_time(&tm, "%d-%m-%Y %H-%M-%S");
-    auto str = oss.str();
-
-    std::cout << str << std::endl;
-127.0.0.1:4444;2;}
+"

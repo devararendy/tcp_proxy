@@ -90,14 +90,14 @@ class DataLogger{
          #ifdef DEBUG
             std::cout << "Saving Incoming Data From : "<< ip << ":" << port << ", data : " << data << std::endl;
          #endif
-         ifl << ip << ":" << port << ";" << data.length() << ";\"" << data << "\"";
+         ifl << ip << ":" << port << ";" << data.length() << ";\"" << data << "\"" << std::endl;
       }
       void writeOutgoingLog(std::string data, std::string ip, uint16_t port)
       {
          #ifdef DEBUG
             std::cout << "Saving Outgoing From : "<< ip << ":" << port << ", data : " << data << std::endl;
          #endif
-         ofl << ip << ":" << port << ";" << data.length() << ";\"" << data << "\"";
+         ofl << ip << ":" << port << ";" << data.length() << ";\"" << data << "\"" << std::endl;
       }
       void thdAutoSave(void)
       {
