@@ -11,6 +11,7 @@
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-I",
                 "${workspaceFolder}/sdk/boost_1_77_0",
+                "-I",
                 "${workspaceFolder}/lib",
                 "-L",
                 "/usr/lib/",

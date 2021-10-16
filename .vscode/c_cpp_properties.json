@@ -5,17 +5,18 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/sdk/boost_1_77_0",
-                "${workspaceFolder}/lib"
+                "${workspaceFolder}/lib/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "gnu17",
-            "cppStandard": "gnu++14",
+            "cppStandard": "gnu++17",
             "intelliSenseMode": "linux-gcc-x64",
             "compilerArgs": [
                 "-I",
                 "${workspaceFolder}/sdk/boost_1_77_0",
-                "${workspaceFolder}/lib",
+                "-I",
+                "${workspaceFolder}/lib/**",
                 "-L",
                 "/usr/lib/",
                 "-lstdc++",

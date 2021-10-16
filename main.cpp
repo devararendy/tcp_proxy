@@ -56,6 +56,7 @@
 #include <boost/bind/bind.hpp>
 #include <boost/asio.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/asio/ip/address.hpp>
 
 #include <fstream>
 #include <thread>
@@ -398,7 +399,46 @@ namespace tcp_proxy
    };
 }
 
+char initRedis(boost::asio::io_service& ioService)
+{
+   boost::asio::ip::address address = boost::asio::ip::address::from_string("127.0.0.1");
+   const unsigned short port = 6379;
+   boost::asio::ip::tcp::endpoint endpoint(address, port);
 
+   redisclient::RedisSyncClient redis(ioService);
+   boost::system::error_code ec;
+
+   redis.connect(endpoint, ec);
+
+   if(ec)
+    {
+        std::cerr << "Can't connect to redis: " << ec.message() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    redisclient::RedisValue result;
+
+    result = redis.command("SET", {"key", "value"});
+
+    if( result.isError() )
+    {
+        std::cerr << "SET error: " << result.toString() << "\n";
+        return EXIT_FAILURE;
+    }
+
+    result = redis.command("GET", {"key"});
+
+    if( result.isOk() )
+    {
+        std::cout << "GET: " << result.toString() << "\n";
+        return EXIT_SUCCESS;
+    }
+    else
+    {
+        std::cerr << "GET error: " << result.toString() << "\n";
+        return EXIT_FAILURE;
+    }
+}
 int main(int argc, char* argv[])
 {
    if (argc != 5)
@@ -421,6 +461,7 @@ int main(int argc, char* argv[])
                                            forward_host, forward_port);
 
       acceptor.accept_connections();
+      initRedis(ios);
       ios.run();
    }
    catch(std::exception& e)
