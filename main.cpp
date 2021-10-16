@@ -64,6 +64,7 @@
 #include <time.h>
 
 #include <redisclient/redissyncclient.h>
+#include <redisclient/redisasyncclient.h>
 
 #define DEBUG
 
@@ -157,7 +158,56 @@ class DataLogger{
 
 };
 
+class RedisLogger{
+   public:
+      void handleConnected(boost::asio::io_service &ioService, redisclient::RedisAsyncClient &redis,
+         boost::system::error_code ec)
+      {
+         if( !ec )
+         {
+            redis.command("SET", {redisKey, redisValue}, [&](const redisclient::RedisValue &v) {
+                  std::cerr << "SET: " << v.toString() << std::endl;
 
+                  redis.command("GET", {redisKey}, [&](const redisclient::RedisValue &v) {
+                     std::cerr << "GET: " << v.toString() << std::endl;
+
+                     redis.command("DEL", {redisKey}, [&](const redisclient::RedisValue &) {
+                        ioService.stop();
+                     });
+                  });
+            });
+         }
+         else
+         {
+            std::cerr << "Can't connect to redis: " << ec.message() << std::endl;
+         }
+      }
+      RedisLogger(boost::asio::io_service& ioService):redis(ioService),ioSer(ioService)
+      {
+         boost::asio::ip::address address = boost::asio::ip::address::from_string("127.0.0.1");
+         const unsigned short port = 6379;
+         endpoint = boost::asio::ip::tcp::endpoint(address, port);
+
+         redisKey = "unique-redis-key-example";
+         redisValue = "unique-redis-value";
+         
+         // redis.connect(endpoint, std::bind(&RedisLogger::handleConnected, std::ref(ioSer), std::ref(redis),
+         //        std::placeholders::_1));
+      }
+      
+      void init()
+      {
+         redis.connect(endpoint, boost::bind(&RedisLogger::handleConnected, std::ref(ioSer), std::ref(redis),
+                std::placeholders::_1));
+      }
+   private:
+      redisclient::RedisAsyncClient redis;
+      boost::asio::ip::tcp::endpoint endpoint;
+      boost::asio::io_service& ioSer;
+      
+      std::string redisKey;
+      std::string redisValue;
+};
 namespace tcp_proxy
 {
    namespace ip = boost::asio::ip;
@@ -170,7 +220,8 @@ namespace tcp_proxy
 
       bridge(boost::asio::io_service& ios)
       : downstream_socket_(ios),
-        upstream_socket_  (ios)
+        upstream_socket_  (ios),
+        redisLog(ios)
       {}
 
       socket_type& downstream_socket()
@@ -326,6 +377,7 @@ namespace tcp_proxy
       socket_type downstream_socket_;
       socket_type upstream_socket_;
       DataLogger dLogger;
+      RedisLogger redisLog;
 
       unsigned char downstream_data_[max_data_length];
       unsigned char upstream_data_  [max_data_length];
