@@ -62,6 +62,8 @@
 #include <chrono>
 #include <time.h>
 
+#include <redisclient/redissyncclient.h>
+
 #define DEBUG
 
 #define OUTGOING_FNAME  "outgoing.csv"

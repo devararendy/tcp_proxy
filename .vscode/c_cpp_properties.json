@@ -4,13 +4,23 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/sdk/boost_1_77_0"
+                "${workspaceFolder}/sdk/boost_1_77_0",
+                "${workspaceFolder}/lib"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "gnu17",
             "cppStandard": "gnu++14",
-            "intelliSenseMode": "linux-gcc-x64"
+            "intelliSenseMode": "linux-gcc-x64",
+            "compilerArgs": [
+                "-I",
+                "${workspaceFolder}/sdk/boost_1_77_0",
+                "${workspaceFolder}/lib",
+                "-L",
+                "/usr/lib/",
+                "-lstdc++",
+                "-lpthread"
+            ]
         }
     ],
     "version": 4

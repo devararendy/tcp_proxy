@@ -11,9 +11,13 @@
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-I",
                 "${workspaceFolder}/sdk/boost_1_77_0",
+                "${workspaceFolder}/lib",
                 "-L",
                 "/usr/lib/",
-                "-lpthread"
+                "-lstdc++",
+                "-lpthread",
+                "-lboost_thread",
+                "-lboost_system"
             ],
             "options": {
                 "cwd": "${fileDirname}"
