@@ -64,7 +64,6 @@
 #include <time.h>
 
 #include <redisclient/redissyncclient.h>
-#include <redisclient/redisasyncclient.h>
 
 #define DEBUG
 
@@ -73,9 +72,74 @@
 
 enum { max_data_length = 8192 }; //8KB
 
+class RedisLogger{
+   public:
+      RedisLogger(boost::asio::io_service& ioService):redis(ioService),ioSer(ioService)
+      {
+         boost::asio::ip::address address = boost::asio::ip::address::from_string("127.0.0.1");
+         const unsigned short port = 6379;
+         endpoint = boost::asio::ip::tcp::endpoint(address, port);
+
+         redisKey = "unique-redis-key-example";
+         redisValue = "unique-redis-value";
+         
+         boost::system::error_code ec;
+         redis.connect(endpoint, ec);
+
+         if(ec)
+         {
+            std::cerr << "Can't connect to redis: " << ec.message() << std::endl;
+         }
+      }
+      std::string getValue(std::string key)
+      {
+         redisclient::RedisValue result;
+         result = redis.command("GET", {key});
+
+         if( result.isOk() )
+         {
+            std::cout << "GET: " << result.toString() << "\n";
+            return result.toString();
+         }
+         return "";
+      }
+      bool setValue(std::string key, std::string value)
+      {
+         redisclient::RedisValue result;
+         result = redis.command("SET", {key, value});
+
+         if( result.isError() )
+         {
+            std::cerr << "SET error: " << result.toString() << "\n";
+            return false;
+         }
+         return true;
+      }
+      bool logIP(std::string IP, int dataLen)
+      {
+         // get total data len
+         int totalByte=0;
+         std::string strTB = getValue(IP);
+         if (strTB != "")
+         {
+            totalByte = std::stoi(strTB);
+         }
+         totalByte += dataLen;
+         std::cout << "Total Byte of IP : " << IP << " = " << totalByte << std::endl;
+         return setValue(IP, std::to_string(totalByte));
+      }
+   private:
+      redisclient::RedisSyncClient redis;
+      boost::asio::ip::tcp::endpoint endpoint;
+      boost::asio::io_service& ioSer;
+      
+      std::string redisKey;
+      std::string redisValue;
+};
+
 class DataLogger{
    public:
-      DataLogger()
+      DataLogger(boost::asio::io_service& ios):redisLog(ios)
       {
          initDataLogger();
       }
@@ -106,7 +170,9 @@ class DataLogger{
          #ifdef DEBUG
             std::cout << "Saving Incoming Data From : "<< ip << ":" << port << ", data : " << data << std::endl;
          #endif
-         ifl << getCurrentTime() << ";" << ip << ":" << port << ";" << data.length() << ";\"" << data << "\"" << std::endl;
+         int len = data.length();
+         redisLog.logIP(ip, len);
+         ifl << getCurrentTime() << ";" << ip << ":" << port << ";" << len << ";\"" << data << "\"" << std::endl;
       }
       void writeOutgoingLog(std::string data, std::string ip, uint16_t port)
       {
@@ -155,59 +221,10 @@ class DataLogger{
       std::ofstream ofl, ifl;
       std::thread ThdAutoSave;
       std::thread *logOutgoing, *logIncoming;
+      RedisLogger redisLog;
 
 };
 
-class RedisLogger{
-   public:
-      void handleConnected(boost::asio::io_service &ioService, redisclient::RedisAsyncClient &redis,
-         boost::system::error_code ec)
-      {
-         if( !ec )
-         {
-            redis.command("SET", {redisKey, redisValue}, [&](const redisclient::RedisValue &v) {
-                  std::cerr << "SET: " << v.toString() << std::endl;
-
-                  redis.command("GET", {redisKey}, [&](const redisclient::RedisValue &v) {
-                     std::cerr << "GET: " << v.toString() << std::endl;
-
-                     redis.command("DEL", {redisKey}, [&](const redisclient::RedisValue &) {
-                        ioService.stop();
-                     });
-                  });
-            });
-         }
-         else
-         {
-            std::cerr << "Can't connect to redis: " << ec.message() << std::endl;
-         }
-      }
-      RedisLogger(boost::asio::io_service& ioService):redis(ioService),ioSer(ioService)
-      {
-         boost::asio::ip::address address = boost::asio::ip::address::from_string("127.0.0.1");
-         const unsigned short port = 6379;
-         endpoint = boost::asio::ip::tcp::endpoint(address, port);
-
-         redisKey = "unique-redis-key-example";
-         redisValue = "unique-redis-value";
-         
-         // redis.connect(endpoint, std::bind(&RedisLogger::handleConnected, std::ref(ioSer), std::ref(redis),
-         //        std::placeholders::_1));
-      }
-      
-      void init()
-      {
-         redis.connect(endpoint, boost::bind(&RedisLogger::handleConnected, std::ref(ioSer), std::ref(redis),
-                std::placeholders::_1));
-      }
-   private:
-      redisclient::RedisAsyncClient redis;
-      boost::asio::ip::tcp::endpoint endpoint;
-      boost::asio::io_service& ioSer;
-      
-      std::string redisKey;
-      std::string redisValue;
-};
 namespace tcp_proxy
 {
    namespace ip = boost::asio::ip;
@@ -221,7 +238,7 @@ namespace tcp_proxy
       bridge(boost::asio::io_service& ios)
       : downstream_socket_(ios),
         upstream_socket_  (ios),
-        redisLog(ios)
+        dLogger(ios)
       {}
 
       socket_type& downstream_socket()
@@ -377,7 +394,6 @@ namespace tcp_proxy
       socket_type downstream_socket_;
       socket_type upstream_socket_;
       DataLogger dLogger;
-      RedisLogger redisLog;
 
       unsigned char downstream_data_[max_data_length];
       unsigned char upstream_data_  [max_data_length];
@@ -451,46 +467,6 @@ namespace tcp_proxy
    };
 }
 
-char initRedis(boost::asio::io_service& ioService)
-{
-   boost::asio::ip::address address = boost::asio::ip::address::from_string("127.0.0.1");
-   const unsigned short port = 6379;
-   boost::asio::ip::tcp::endpoint endpoint(address, port);
-
-   redisclient::RedisSyncClient redis(ioService);
-   boost::system::error_code ec;
-
-   redis.connect(endpoint, ec);
-
-   if(ec)
-    {
-        std::cerr << "Can't connect to redis: " << ec.message() << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    redisclient::RedisValue result;
-
-    result = redis.command("SET", {"key", "value"});
-
-    if( result.isError() )
-    {
-        std::cerr << "SET error: " << result.toString() << "\n";
-        return EXIT_FAILURE;
-    }
-
-    result = redis.command("GET", {"key"});
-
-    if( result.isOk() )
-    {
-        std::cout << "GET: " << result.toString() << "\n";
-        return EXIT_SUCCESS;
-    }
-    else
-    {
-        std::cerr << "GET error: " << result.toString() << "\n";
-        return EXIT_FAILURE;
-    }
-}
 int main(int argc, char* argv[])
 {
    if (argc != 5)
@@ -513,7 +489,6 @@ int main(int argc, char* argv[])
                                            forward_host, forward_port);
 
       acceptor.accept_connections();
-      initRedis(ios);
       ios.run();
    }
    catch(std::exception& e)

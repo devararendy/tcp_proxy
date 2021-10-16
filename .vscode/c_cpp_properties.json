@@ -5,7 +5,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/sdk/boost_1_77_0",
-                "${workspaceFolder}/lib/**"
+                "${workspaceFolder}/lib"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
@@ -16,7 +16,7 @@
                 "-I",
                 "${workspaceFolder}/sdk/boost_1_77_0",
                 "-I",
-                "${workspaceFolder}/lib/**",
+                "${workspaceFolder}/lib",
                 "-L",
                 "/usr/lib/",
                 "-lstdc++",
