@@ -70,7 +70,7 @@
 #define OUTGOING_FNAME  "outgoing.csv"
 #define INCOMING_FNAME  "incoming.csv"
 
-enum { max_data_length = 8192000 }; //8KB
+enum { max_data_length = 8192000 }; //8MB
 
 class RedisLogger{
    public:
