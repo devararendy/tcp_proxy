@@ -15,8 +15,11 @@ Please follow the steps bellow :
 ./main  <local host ip> <local port> <forward host ip> <forward port>
 For example we will connect to a simple HTTP server from 24invitation.com:8080. You can try to ping the server domain To get the server IP address. IP of 24invitation.com is 185.201.8.86. We will try connect to a simple HTTP server at port 8080.
     
+    $ ./main <local host ip> <local port> <forward host ip> <forward port>
     eg : ./main 0.0.0.0 1234 185.201.8.86 8080
     
+After the TCP Proxy started, you can try to open http://127.0.0.1:1234.
+
 <h2>Data Logger</h2>
 Any Incoming and Outgoing on each IP is logged into file incoming.csv and outgoing.csv. Just in case if the data log will be used for further analysis. The data log format is shown below:
 
