@@ -13,7 +13,7 @@ Please follow the steps bellow :
 
 <h2>How to Run the Proxy :</h2>
 ./main  <local host ip> <local port> <forward host ip> <forward port>
-For example we will connect to a simple HTTP server from 24invitation.com:8080. To get the server IP address, you can try to ping the domain.IP of 24invitation.com is 185.201.8.86. We will try connect to a simple HTTP server at port 8080.
+For example we will connect to a simple HTTP server from 24invitation.com:8080. You can try to ping the server domain To get the server IP address. IP of 24invitation.com is 185.201.8.86. We will try connect to a simple HTTP server at port 8080.
     
     eg : ./main 0.0.0.0 1234 185.201.8.86 8080
     
