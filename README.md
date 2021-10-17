@@ -18,14 +18,14 @@ For example we will connect to a simple HTTP server from 24invitation.com:8080. 
     $ ./main <local host ip> <local port> <forward host ip> <forward port>
     eg : ./main 0.0.0.0 1234 185.201.8.86 8080
     
-After the TCP Proxy started, you can try to open http://127.0.0.1:1234.
+After the TCP Proxy started, you can try to open http://127.0.0.1:1234 using incognito mode, to avoid opening page in https automatically. When either of the end points terminate their respective connection to the proxy, the proxy will proceed to close (or shutdown) the other corresponding connection. 
 
 <h2>Data Logger</h2>
 Any Incoming and Outgoing on each IP is logged into file incoming.csv and outgoing.csv. Just in case if the data log will be used for further analysis. The data log format is shown below:
 
     Date Time;Client IP Address:Client Port;Data Length in Bytes;"Raw Data"\n
 
-Each incoming data from Client is also counted using Redis, Therefore you must install Redis to your system. The keyvalue is Client IP Address.
+Each incoming data from Client is also counted using Redis, Therefore you must install Redis to your system. The keyvalue is Client IP Address. Note: Redis will be flush on each time the program started.
 
 *   To get available Client IPs, please follow command bellow using your terminal:
 
