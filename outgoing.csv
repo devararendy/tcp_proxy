@@ -1,0 +1,12 @@
+10/17/21 17:57:04;127.0.0.1:50684;184;"HTTP/1.0 200 OK
+Server: SimpleHTTP/0.6 Python/3.7.3
+Date: Sun, 17 Oct 2021 10:57:04 GMT
+Content-type: text/html
+Content-Length: 97
+Last-Modified: Sun, 17 Oct 2021 10:30:13 GMT
+
+"
+10/17/21 17:57:04;127.0.0.1:50684;97;"<h1>Hello World :D</h1>
+<p>This is a simple http server, for testing TCP Proxy Rendy Devara</p>
+
+"

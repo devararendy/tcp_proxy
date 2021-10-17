@@ -3,4 +3,4 @@ To build:
 2. install : sudo apt-get install libboost-all-dev
 3. install : sudo apt install redis
 4. Open Visual Studio Code and then File > Open Folder > Select "tcp_proxy" that you have clone.
-5. Still on VScode, Open "main.cpp" then click tab Terminal > Run Buid Task
+5. Still on VScode, Open "main.cpp" then click tab Terminal > Run Build Task
