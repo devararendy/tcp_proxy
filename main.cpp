@@ -90,6 +90,7 @@ class RedisLogger{
          {
             std::cerr << "Can't connect to redis: " << ec.message() << std::endl;
          }
+         redis.command("FLUSHALL", {});                                                //NOTE : Comment this, if you dont want to clear all redis data
       }
       std::string getValue(std::string key)
       {
@@ -177,7 +178,7 @@ class DataLogger{
       void writeOutgoingLog(std::string data, std::string ip, uint16_t port)
       {
          #ifdef DEBUG
-            std::cout << "Saving Outgoing From : "<< ip << ":" << port << ", data : " << data << std::endl;
+            std::cout << "Saving Outgoing Data For : "<< ip << ":" << port << ", data : " << data << std::endl;
          #endif
          ofl << getCurrentTime() << ";" << ip << ":" << port << ";" << data.length() << ";\"" << data << "\"" << std::endl;
       }
@@ -302,10 +303,10 @@ namespace tcp_proxy
       {
          if (!error)
          {
-            std::cout << "Data to write to client :" << upstream_data_ << ", len : " << bytes_transferred << std::endl;
-            std::cout << "downstream socket : " << downstream_socket_.remote_endpoint().address() << ", port : " << downstream_socket_.remote_endpoint().port() << std::endl;
+            // std::cout << "Data to write to client :" << upstream_data_ << ", len : " << bytes_transferred << std::endl;
+            // std::cout << "downstream socket : " << downstream_socket_.remote_endpoint().address() << ", port : " << downstream_socket_.remote_endpoint().port() << std::endl;
             std::string outgoing = std::string((char*)upstream_data_, bytes_transferred);
-            dLogger.addOutgoingLog(outgoing, downstream_socket_.remote_endpoint().address().to_string(), downstream_socket_.remote_endpoint().port());
+            dLogger.addOutgoingLog(outgoing, downstream_socket().remote_endpoint().address().to_string(), downstream_socket().remote_endpoint().port());
             async_write(downstream_socket_,
                  boost::asio::buffer(upstream_data_,bytes_transferred),
                  boost::bind(&bridge::handle_downstream_write,
@@ -321,6 +322,7 @@ namespace tcp_proxy
       {
          if (!error)
          {
+            // std::cout << "handle_downstream_write : " << upstream_data_ << std::endl;
             upstream_socket_.async_read_some(
                  boost::asio::buffer(upstream_data_,max_data_length),
                  boost::bind(&bridge::handle_upstream_read,
@@ -345,10 +347,10 @@ namespace tcp_proxy
       {
          if (!error)
          {
-            std::cout << "Data to write to server :" << downstream_data_ << ", len : " << bytes_transferred << std::endl;
-            std::cout << "upstream socket : " << upstream_socket_.remote_endpoint().address() << ", port : " << upstream_socket_.remote_endpoint().port() << std::endl;
+            // std::cout << "Data to write to server :" << downstream_data_ << ", len : " << bytes_transferred << std::endl;
+            // std::cout << "upstream socket : " << upstream_socket_.remote_endpoint().address() << ", port : " << upstream_socket_.remote_endpoint().port() << std::endl;
             std::string incoming = std::string((char*)downstream_data_, bytes_transferred);
-            dLogger.addIncomingLog(incoming, upstream_socket_.remote_endpoint().address().to_string(), upstream_socket_.remote_endpoint().port());
+            dLogger.addIncomingLog(incoming, downstream_socket().remote_endpoint().address().to_string(), downstream_socket().remote_endpoint().port());
             async_write(upstream_socket_,
                   boost::asio::buffer(downstream_data_,bytes_transferred),
                   boost::bind(&bridge::handle_upstream_write,
@@ -364,6 +366,7 @@ namespace tcp_proxy
       {
          if (!error)
          {
+            // std::cout << "handle_upstream_write : " << downstream_data_ << std::endl;
             downstream_socket_.async_read_some(
                  boost::asio::buffer(downstream_data_,max_data_length),
                  boost::bind(&bridge::handle_downstream_read,
